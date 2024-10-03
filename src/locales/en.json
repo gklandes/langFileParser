@@ -1,5 +1,14 @@
 {
   "translation": {
-    "hello": "Hello World"
+    "app": {
+      "title": "LangFileParser"
+    },
+    "sr": {
+      "toggleAppMenu": "Toggle app menu",
+      "toggleFileMenu": "Toggle file menu"
+    },
+    "btn": {
+      "addFile": "Add file"
+    }
   }
 }
