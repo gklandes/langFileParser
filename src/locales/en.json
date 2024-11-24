@@ -1,7 +1,15 @@
 {
   "translation": {
     "app": {
-      "title": "LangFileParser"
+      "title": "LangFileParser",
+      "getStarted": "Get started!",
+      "getStartedMsg": "Add one or more translation files to begin",
+      "translationFiles": "Translation files",
+      "translations": "Translations",
+      "sourceFile": "Source file",
+      "keys": "keys",
+      "files": "Files",
+      "missing": "missing translations"
     },
     "sr": {
       "toggleAppMenu": "Toggle app menu",

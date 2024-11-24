@@ -3,9 +3,9 @@ import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { FormEvent, useCallback, useRef, useState } from 'react';
-import { LangFileObj } from '@/App';
 import { Alert } from './ui/alert';
 import { Card, CardContent } from './ui/card';
+import { LangFileObj } from '@/lib/parseLangFile';
 
 interface AddFileProps { onAdd: (fileObj: LangFileObj) => void }
 export default function AddFile({ onAdd }: AddFileProps) {
@@ -34,7 +34,7 @@ export default function AddFile({ onAdd }: AddFileProps) {
           setError('Unable to parse the file');
           return;
         }
-        onAdd({ name, data, changed: false })
+        onAdd({ name, data, form: {} })
       },
       false,
     );
