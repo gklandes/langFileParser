@@ -13,20 +13,10 @@ interface FlattenedPair {
   value: string;
 }
 
-export interface FlattendFile {
-  name: string;
-  translations: FlattenedPair[];
-}
-
-interface ComparisonResult {
-  name: string;
-  missingKeys: string[];
-}
-
 export interface FullComparisonResult {
   allKeys: string[];
-  fileComparisons: ComparisonResult[];
-  flattenedFiles: FlattendFile[];
+  fileComparisons: Record<string, string[]>;
+  flattenedFiles: Record<string, FlattenedPair[]>;
 }
 
 function flattenAndSortTranslations(
@@ -47,36 +37,35 @@ function flattenAndSortTranslations(
 }
 
 export function parseLangFiles(files: LangFileObj[]): FullComparisonResult {
+  if (!files.length) return { allKeys: [], fileComparisons: {}, flattenedFiles: {} };
   // First, flatten all files
-  const flattenedFiles = files.map(file => ({
-    name: file.name,
-    translations: flattenAndSortTranslations(file.data)
-  }));
+  const flattenedFiles = files.reduce((obj, file) => {
+    obj[file.name] = flattenAndSortTranslations(file.data);
+    return obj;
+  }, {} as Record<string, FlattenedPair[]>);
 
   // Collect all unique keys across all files
-  const allKeys = new Set<string>();
-  flattenedFiles.forEach(file => {
-    file.translations.forEach(item => {
-      allKeys.add(item.key);
+  const unsortedAllKeys = new Set<string>();
+  Object.values(flattenedFiles).forEach(translations => {
+    translations.forEach(item => {
+      unsortedAllKeys.add(item.key);
     });
   });
 
   // Sort all keys alphabetically
-  const sortedAllKeys = Array.from(allKeys).sort();
+  const allKeys = Array.from(unsortedAllKeys).sort();
 
   // Compare each file against all keys
-  const fileComparisons = flattenedFiles.map(file => {
-    const fileKeys = new Set(file.translations.map(item => item.key));
-    const missingKeys = sortedAllKeys.filter(key => !fileKeys.has(key));
-
-    return {
-      name: file.name,
-      missingKeys
-    };
-  });
+  const fileComparisons = Object.keys(flattenedFiles).reduce((obj, fileName) => {
+    const translations = flattenedFiles[fileName];
+    const fileKeys = new Set(translations.map(item => item.key));
+    const missingKeys = allKeys.filter(key => !fileKeys.has(key));
+    obj[fileName] = missingKeys;
+    return obj;
+  }, {} as Record<string, string[]>);
 
   return {
-    allKeys: sortedAllKeys,
+    allKeys,
     fileComparisons,
     flattenedFiles
   };

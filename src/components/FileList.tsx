@@ -2,16 +2,16 @@ import { t } from 'i18next';
 import { ArrowBigUpDashIcon, StarIcon, DownloadIcon, Trash2Icon } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Button } from './ui/button';
-import { FullComparisonResult, LangFileObj } from '@/lib/parseLangFile';
+import { LangFileObj } from '@/lib/parseLangFile';
 
 interface FileListProps {
   langFiles: LangFileObj[];
-  parseResults: FullComparisonResult | null;
+  fileComparisons: Record<string, string[]> | null;
   onPromote: (file: LangFileObj) => void;
   onDownload: (file: LangFileObj) => void;
   onRemove: (file: LangFileObj) => void;
 };
-const FileList = ({ langFiles, parseResults, onPromote, onDownload, onRemove }: FileListProps) => {
+const FileList = ({ langFiles, fileComparisons, onPromote, onDownload, onRemove }: FileListProps) => {
   return <>
     {!!langFiles.length && <Accordion
       type="single"
@@ -21,7 +21,9 @@ const FileList = ({ langFiles, parseResults, onPromote, onDownload, onRemove }: 
           <AccordionTrigger>
             <h3 className='px-2 text-lg font-semibold'>
               {file.name}
-              {!!parseResults && <span></span>}
+              {fileComparisons && fileComparisons[file.name].length > 1 && <>
+                &nbsp;<div className='inline-block text-xs text-destructive p-1'>{fileComparisons[file.name].length} {t('app.missing')}</div>
+              </>}
             </h3>
           </AccordionTrigger>
           <AccordionContent>

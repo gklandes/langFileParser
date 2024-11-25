@@ -7,8 +7,8 @@ import { Alert } from './ui/alert';
 import { Card, CardContent } from './ui/card';
 import { LangFileObj } from '@/lib/parseLangFile';
 
-interface AddFileProps { onAdd: (fileObj: LangFileObj) => void }
-export default function AddFile({ onAdd }: AddFileProps) {
+interface FileAddFormProps { onAdd: (fileObj: LangFileObj) => void }
+export default function FileAddForm({ onAdd }: FileAddFormProps) {
   const { t } = useTranslation();
   const [openForm, setOpenForm] = useState(false);
   const [error, setError] = useState('');

@@ -12,51 +12,42 @@ import {
 } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useTranslation } from 'react-i18next'
-import AddFile from './components/AddFile'
-import { ChangeEvent, useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
 import { useLocalStorage } from './lib/use-local-storage'
 import { toast } from 'sonner'
-import { parseLangFiles, LangFileObj, FullComparisonResult, FormData } from './lib/parseLangFile'
+import { parseLangFiles, LangFileObj, FormData } from './lib/parseLangFile'
 import { Input } from './components/ui/input'
 import { ThemeToggle } from './components/theme'
 import FileList from './components/FileList'
+import FileAddForm from './components/FileAddForm'
 
 export default function App() {
   const { t } = useTranslation();
   const [langFiles, setLangFiles] = useLocalStorage<LangFileObj[]>('langFiles', []);
-  const [parseResults, setParseResults] = useState <FullComparisonResult | null>(null);
-  const [formData, setFormData] = useState <FormData | null>(null);
-  const [sourceFile, setSourceFile] = useState('');
-  const [selectFile, setSelectFile] = useState('');
+  const [formData, setFormData] = useLocalStorage<FormData | null>('formData', null);
+  const [sourceFile, setSourceFile] = useLocalStorage<string | null>('sourceFile', null);
+  const [fileSelected, setSelectFile] = useLocalStorage<string | null>('fileSelected', null);
+  const { allKeys, fileComparisons, flattenedFiles } = parseLangFiles(langFiles);
+  console.log({ allKeys, fileComparisons, flattenedFiles });
 
-  const handleAddFile = useCallback((fileObj: LangFileObj) => {
-    const match = langFiles.find(file => file.name === fileObj.name);
-    if (!sourceFile) setSourceFile(fileObj.name);
-    if (!selectFile) setSelectFile(fileObj.name);
+
+  const addFile = useCallback((file: LangFileObj) => {
+    const match = langFiles.find(f => f.name === file.name);
+    if (sourceFile) setSourceFile(file.name);
+    if (!fileSelected) setSelectFile(file.name);
     if (match) {
       console.warn('duplicate file added', { langFiles, match });
       toast(t('msg.dupFile'));
     } else {
-      setLangFiles([...langFiles, fileObj]);
+      setLangFiles([...langFiles, file]);
     }
-  }, [setLangFiles, langFiles, selectFile, sourceFile, t]);
-
-  const setupForm = useCallback(() => {
-    const src = parseResults?.flattenedFiles.find(f => f.name === sourceFile);
-    // console.log('setupForm', {file});
-    // if (src) {
-    //   const form = file.translations.reduce((obj: FormData, {key, value}) => {
-    //     obj[key] = value;
-    //     return obj;
-    //   }, {})
-    //   setFormData(form);
-    // }
-  }, [parseResults?.flattenedFiles]);
+  }, [langFiles, sourceFile, setSourceFile, fileSelected, setSelectFile, t, setLangFiles]);
 
   const promoteFile = useCallback((file: LangFileObj) => {
     const otherFiles = langFiles.filter(item => item.name !== file.name);
-    setLangFiles([file, ...otherFiles])
-  }, [setLangFiles, langFiles])
+    setLangFiles([file, ...otherFiles]);
+    setSourceFile(file.name);
+  }, [langFiles, setLangFiles, setSourceFile])
 
   const downloadFile = (file: LangFileObj) => {
     const blob = new Blob([JSON.stringify(file.data)], { type: 'application/json' });
@@ -70,33 +61,13 @@ export default function App() {
   };
 
   const removeFile = useCallback((file: LangFileObj) => {
-    const isLast = langFiles.length === 1;
-    const root = isLast ? '' : langFiles[0].name;
-    setLangFiles(langFiles.filter(item => item.name !== file.name))
-    if (isLast) setParseResults(null);
-    if (file.name === selectFile) setSelectFile(root);
-  }, [setLangFiles, langFiles, selectFile])
+    const newFiles = langFiles.filter(item => item.name !== file.name)
+    setLangFiles(newFiles)
+    if (file.name === fileSelected) setSelectFile(newFiles.length ? langFiles[0].name : null);
+  }, [langFiles, setLangFiles, fileSelected, setSelectFile])
 
-  useEffect(() => {
-    console.log('UE->setParseResults');
-    const results = parseLangFiles(langFiles);
-    setParseResults(results);
-  }, [langFiles, selectFile]);
-
-  useEffect(() => {
-    console.log('UE->setupForm', selectFile, sourceFile, parseResults);
-    if (!formData && parseResults) {
-      setupForm();
-    }
-  }, [parseResults, selectFile, sourceFile, formData, setupForm]);
-
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>, key: string) => {
-    e.preventDefault();
-    const update: FormData = {};
-    const value = e.target.value;
-    update[key] = value;
-    setFormData({ ...formData, ...update })
+  const handleFormChange = (key: string, value: string) => {
+    setFormData({ ...formData, ...{ [key]: value } })
   }
 
   return (
@@ -117,10 +88,10 @@ export default function App() {
             <h1 className='flex flex-row items-center mb-3'>
               <LanguagesIcon className="h-6 w-6 m-2" /><span className="text-2xl font-extrabold leading-tight">{t('app.title')}</span>
             </h1>
-            <AddFile onAdd={handleAddFile} />
+            <FileAddForm onAdd={addFile} />
             <FileList
               langFiles={langFiles}
-              parseResults={parseResults}
+              fileComparisons={fileComparisons}
               onPromote={promoteFile}
               onDownload={downloadFile}
               onRemove={removeFile}/>
@@ -136,10 +107,10 @@ export default function App() {
       <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col gap-4 bg-muted/40 p-4 md:gap-8 md:p-10">
         <div className="mx-auto grid w-full max-w-6xl items-start gap-6 md:grid-cols-[180px_1fr] lg:grid-cols-[250px_1fr]">
           <div className="hidden sm:inline mx-auto w-full max-w-6xl gap-2">
-            <AddFile onAdd={handleAddFile} />
+            <FileAddForm onAdd={addFile} />
             <FileList
               langFiles={langFiles}
-              parseResults={parseResults}
+              fileComparisons={fileComparisons}
               onPromote={promoteFile}
               onDownload={downloadFile}
               onRemove={removeFile} />
@@ -153,7 +124,7 @@ export default function App() {
                 <CardContent><p>{t('app.getStartedMsg')}</p></CardContent>
               </Card>
             }
-            {!!parseResults?.allKeys.length &&
+            {langFiles.length &&
               <Card>
                 <CardHeader>
                   <CardTitle>
@@ -165,7 +136,7 @@ export default function App() {
                 </CardHeader>
                 <CardContent>
                   <table className="w-full"><tbody>
-                  {parseResults.allKeys.map(key => <tr key={key}>
+                  {allKeys.map(key => <tr key={key}>
                     <td className="p-2 border-b">
                       <span className='text-sm opacity-40 italic'>{key.split('.').slice(0, -1).join('.')}.</span>
                       <span className='text-sm italic'>{key.split('.').slice(-1)}</span><br />
@@ -175,7 +146,10 @@ export default function App() {
                       <Input
                         name={`fc_${key}`}
                         value={formData ? formData[key] : '' }
-                        onChange={e => handleChange(e, key)}
+                        onChange={e => {
+                          e.preventDefault();
+                          handleFormChange(key, e.target.value);
+                        }}
                       />
                     </td>
                   </tr>)}
