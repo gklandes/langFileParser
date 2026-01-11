@@ -47,3 +47,7 @@
 ## References
 - See [README.md](../../README.md) for ESLint and setup details.
 - Key files: `src/App.tsx`, `src/i18n.ts`, `src/components/`, `src/lib/`, `vite.config.ts`, `eslint.config.js`.
+
+## AI / Agent Usage Guidelines
+- When generating planning documents or code, put all ephemeral files in a separate folder named `ai-context/`.
+- Do not commit code unless explicitly instructed.
