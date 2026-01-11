@@ -1,50 +1,55 @@
-# React + TypeScript + Vite
+# langFileParser
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small React app for comparing i18n JSON language files.
 
-Currently, two official plugins are available:
+You can import multiple locale JSON files, the app will flatten nested objects into dot-delimited keys (e.g. `app.title`), compute the union of keys across all files, and show which files are missing which keys.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+In production, this app is intended to be a completely self-contained, local app (no external data processing). Users can access it as a web page and interact with it, without any local data being processed outside of the local environment.
 
-## Expanding the ESLint configuration
+## How to use
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+1. Start the app (local development) / Load the app in browser (deployed).
+2. Click **Add file** and import one or more `.json` translation files.
+3. Use **Set base** to promote a file as the “base” (first in the list).
+4. The file list shows a “missing” count per file.
+5. The main table lists all keys and provides inputs to edit translation values.
 
-- Configure the top-level `parserOptions` property like this:
+Notes:
+- Imported files and edits are persisted in the browser via `localStorage`.
+- Duplicate filenames are rejected (you’ll see a toast).
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+Reset / clear data:
+- To reset the app state, clear site data for this origin (Chrome: DevTools → Application → Storage → “Clear site data”).
+- Or manually remove these `localStorage` keys: `langFiles`, `formData`, `sourceFile`, `fileSelected`.
+
+## Development
+
+```bash
+npm install
+npm run dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+Other scripts:
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+npm run build
+npm run preview
+npm run lint
 ```
+
+## Project structure (high-signal)
+
+- Core parsing/comparison logic: `src/lib/parseLangFile.ts` (`parseLangFiles`, flattening)
+- Persistent state helper: `src/lib/use-local-storage.ts`
+- App composition/state wiring: `src/App.tsx`
+- File ingestion UI: `src/components/FileAddForm.tsx` (FileReader + JSON.parse)
+- File list UI/actions: `src/components/FileList.tsx`
+- i18n wiring: `src/i18n.ts` and `src/locales/*.json`
+- Theme provider + toggle: `src/components/theme/*`
+
+## Tech stack
+
+- Vite + React + TypeScript
+- Tailwind CSS + Radix UI primitives (in `src/components/ui/*`)
+- `react-i18next` for UI localization
+- `sonner` for toast notifications
